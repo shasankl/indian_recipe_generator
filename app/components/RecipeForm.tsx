@@ -1,16 +1,14 @@
 "use client";
 
-import { formatHeightSummary } from "@/lib/height-units";
-import type { RecipeInputs, UserProfile } from "@/lib/schemas";
+import type { RecipeInputs } from "@/lib/schemas";
 import { inputClass, labelClass } from "@/lib/ui";
 
 type Props = {
-  profile: UserProfile;
   disabled?: boolean;
   onSubmit: (inputs: RecipeInputs) => void;
 };
 
-export function RecipeForm({ profile, disabled, onSubmit }: Props) {
+export function RecipeForm({ disabled, onSubmit }: Props) {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -26,30 +24,6 @@ export function RecipeForm({ profile, disabled, onSubmit }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-7">
-      <p className="rounded-xl border border-stone-200/80 bg-stone-50/80 px-4 py-3 text-[15px] leading-relaxed text-stone-700 dark:border-stone-700 dark:bg-stone-800/50 dark:text-stone-300">
-        <span className="font-medium text-stone-800 dark:text-stone-200">
-          Using your saved profile:
-        </span>{" "}
-        {profile.gender === "male"
-          ? "Male"
-          : profile.gender === "female"
-            ? "Female"
-            : null}
-        {profile.gender !== "unspecified" ? ", " : ""}
-        {formatHeightSummary(profile.heightCm, profile.heightUnit)},{" "}
-        {profile.weightKg} kg
-        {profile.goals ? (
-          <>
-            {" "}
-            — {profile.goals}
-          </>
-        ) : (
-          <span className="text-stone-500">
-            {" "}
-            (add a few words about your goals under Your details)
-          </span>
-        )}
-      </p>
       <fieldset className="flex flex-col gap-3">
         <legend className={labelClass}>Which meal?</legend>
         <div className="flex flex-wrap gap-3">

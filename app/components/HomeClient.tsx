@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ProfileForm } from "@/app/components/ProfileForm";
+import { ProfileModal } from "@/app/components/ProfileModal";
 import { RecipeForm } from "@/app/components/RecipeForm";
 import { RecipeResult } from "@/app/components/RecipeResult";
 import { loadProfile, persistProfile } from "@/lib/profile-storage";
@@ -11,8 +11,6 @@ import {
   type RecipeResponse,
   type UserProfile,
 } from "@/lib/schemas";
-
-type Tab = "profile" | "recipe";
 
 function LoadingShell() {
   return (
@@ -58,15 +56,15 @@ function Spinner() {
 }
 
 export function HomeClient() {
-  const [tab, setTab] = useState<Tab>("profile");
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileHighlight, setProfileHighlight] = useState(false);
   const [recipe, setRecipe] = useState<RecipeResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveHint, setSaveHint] = useState(false);
 
   useEffect(() => {
-    // Hydrate from localStorage after mount (avoids SSR/client mismatch).
     // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage
     setProfile(loadProfile());
   }, []);
@@ -75,11 +73,27 @@ export function HomeClient() {
     return <LoadingShell />;
   }
 
+  function handleProfileChange(next: UserProfile) {
+    setProfile(next);
+    setProfileHighlight(false);
+  }
+
   function handleSaveProfile() {
     if (!profile) return;
     persistProfile(profile);
     setSaveHint(true);
+    setProfileHighlight(false);
     window.setTimeout(() => setSaveHint(false), 2500);
+  }
+
+  function openProfile() {
+    setProfileOpen(true);
+    setProfileHighlight(false);
+  }
+
+  function closeProfile() {
+    setProfileOpen(false);
+    setProfileHighlight(false);
   }
 
   async function handleRecipeRequest(inputs: RecipeInputs) {
@@ -91,9 +105,10 @@ export function HomeClient() {
       const fieldErrors = valid.error.flatten().fieldErrors;
       const first =
         Object.values(fieldErrors).flat()[0] ??
-        "Please add height, weight, and a short note on your goals.";
+        "Please add height, weight, and a short note on your goals in Your profile.";
       setError(first);
-      setTab("profile");
+      setProfileHighlight(true);
+      setProfileOpen(true);
       return;
     }
 
@@ -127,118 +142,78 @@ export function HomeClient() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-10 sm:px-6 lg:max-w-3xl">
-      <div className="rounded-2xl border border-stone-200/70 bg-white/85 px-5 py-8 shadow-xl shadow-stone-300/25 backdrop-blur-sm sm:px-8 sm:py-10 dark:border-stone-700/70 dark:bg-stone-900/75 dark:shadow-black/50">
-        <header className="mb-8 border-b border-stone-200/80 pb-8 dark:border-stone-700/80">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900/80 dark:text-amber-500/90">
-            Rasoi
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl dark:text-stone-50">
-            Recipes that fit your life
-          </h1>
-          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-stone-600 dark:text-stone-400">
-            Save your details once. Then ask for a sensible home-style idea—
-            with your time and tastes in mind.
-          </p>
-        </header>
-
-        <div
-          className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch"
-          role="tablist"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "profile"}
-            onClick={() => setTab("profile")}
-            className={`flex flex-1 flex-col rounded-xl px-4 py-3 text-left transition ${
-              tab === "profile"
-                ? "bg-amber-900 text-white shadow-md shadow-amber-900/25 dark:bg-amber-700 dark:shadow-amber-900/30"
-                : "bg-stone-100/90 text-stone-700 hover:bg-stone-200/90 dark:bg-stone-800/80 dark:text-stone-300 dark:hover:bg-stone-800"
-            }`}
-          >
-            <span className="text-sm font-semibold">Your details</span>
-            <span
-              className={`mt-0.5 text-xs font-normal ${
-                tab === "profile"
-                  ? "text-amber-100/90"
-                  : "text-stone-500 dark:text-stone-500"
-              }`}
-            >
-              Step 1 of 2 — height, weight, goals
-            </span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "recipe"}
-            onClick={() => setTab("recipe")}
-            className={`flex flex-1 flex-col rounded-xl px-4 py-3 text-left transition ${
-              tab === "recipe"
-                ? "bg-amber-900 text-white shadow-md shadow-amber-900/25 dark:bg-amber-700 dark:shadow-amber-900/30"
-                : "bg-stone-100/90 text-stone-700 hover:bg-stone-200/90 dark:bg-stone-800/80 dark:text-stone-300 dark:hover:bg-stone-800"
-            }`}
-          >
-            <span className="text-sm font-semibold">Request a recipe</span>
-            <span
-              className={`mt-0.5 text-xs font-normal ${
-                tab === "recipe"
-                  ? "text-amber-100/90"
-                  : "text-stone-500 dark:text-stone-500"
-              }`}
-            >
-              Step 2 of 2 — meal and preferences
-            </span>
-          </button>
-        </div>
-
-        <div className="mt-8">
-          {tab === "profile" ? (
-            <div>
-              {saveHint ? (
-                <p className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-200">
-                  <span className="text-base" aria-hidden>
-                    ✓
-                  </span>
-                  Saved on this device. We will use it for your next recipe.
-                </p>
-              ) : null}
-              <ProfileForm
-                profile={profile}
-                onChange={setProfile}
-                onSave={handleSaveProfile}
-              />
+    <>
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:max-w-3xl">
+        <div className="rounded-2xl border border-stone-200/70 bg-white/85 px-5 py-8 shadow-xl shadow-stone-300/25 backdrop-blur-sm sm:px-8 sm:py-10 dark:border-stone-700/70 dark:bg-stone-900/75 dark:shadow-black/50">
+          <header className="flex items-start justify-between gap-4 border-b border-stone-200/80 pb-8 dark:border-stone-700/80">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900/80 dark:text-amber-500/90">
+                Rasoi
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl dark:text-stone-50">
+                Recipes that fit your life
+              </h1>
+              <p className="mt-3 text-[15px] leading-relaxed text-stone-600 dark:text-stone-400">
+                Tell us what you are in the mood for—we will suggest a sensible
+                home-style idea.
+              </p>
             </div>
-          ) : (
-            <RecipeForm
-              profile={profile}
-              disabled={loading}
-              onSubmit={handleRecipeRequest}
-            />
-          )}
+            <button
+              type="button"
+              onClick={openProfile}
+              className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700/40 ${
+                profileHighlight
+                  ? "border-amber-600 bg-amber-50 text-amber-950 ring-2 ring-amber-600 ring-offset-2 ring-offset-white dark:bg-amber-950/50 dark:text-amber-100 dark:ring-offset-stone-900"
+                  : "border-stone-300 bg-stone-100 text-stone-800 hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
+              }`}
+            >
+              Your profile
+            </button>
+          </header>
+
+          <main className="mt-8">
+            <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-50">
+              Request a recipe
+            </h2>
+            <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+              Choose a meal and we will suggest something that fits.
+            </p>
+            <div className="mt-6">
+              <RecipeForm disabled={loading} onSubmit={handleRecipeRequest} />
+            </div>
+
+            {error ? (
+              <div
+                className="mt-6 flex gap-3 rounded-xl border border-red-200/90 bg-red-50/95 px-4 py-3 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-100"
+                role="alert"
+              >
+                <AlertIcon />
+                <p className="leading-relaxed">{error}</p>
+              </div>
+            ) : null}
+
+            {loading ? (
+              <div className="mt-6 flex items-center gap-3 text-sm text-stone-600 dark:text-stone-400">
+                <Spinner />
+                <span className="leading-relaxed">
+                  Preparing your recipe—this usually takes a few seconds.
+                </span>
+              </div>
+            ) : null}
+
+            {recipe ? <RecipeResult recipe={recipe} /> : null}
+          </main>
         </div>
-
-        {error ? (
-          <div
-            className="mt-6 flex gap-3 rounded-xl border border-red-200/90 bg-red-50/95 px-4 py-3 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-100"
-            role="alert"
-          >
-            <AlertIcon />
-            <p className="leading-relaxed">{error}</p>
-          </div>
-        ) : null}
-
-        {loading ? (
-          <div className="mt-6 flex items-center gap-3 text-sm text-stone-600 dark:text-stone-400">
-            <Spinner />
-            <span className="leading-relaxed">
-              Preparing your recipe—this usually takes a few seconds.
-            </span>
-          </div>
-        ) : null}
-
-        {recipe ? <RecipeResult recipe={recipe} /> : null}
       </div>
-    </div>
+
+      <ProfileModal
+        open={profileOpen}
+        onClose={closeProfile}
+        profile={profile}
+        onChange={handleProfileChange}
+        onSave={handleSaveProfile}
+        saveHint={saveHint}
+      />
+    </>
   );
 }

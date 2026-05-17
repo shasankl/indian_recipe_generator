@@ -122,9 +122,10 @@ type Props = {
   profile: UserProfile;
   onChange: (p: UserProfile) => void;
   onSave: () => void;
+  compact?: boolean;
 };
 
-function HeightFields({
+function BodyMetricsFields({
   profile,
   onChange,
 }: {
@@ -135,15 +136,16 @@ function HeightFields({
   const { feet, inches } = cmToFeetInches(profile.heightCm);
 
   const segBase =
-    "rounded-lg px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700/35";
+    "rounded-md px-2 py-1 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700/35";
   const segOn =
     "bg-amber-900 text-amber-50 dark:bg-amber-700 dark:text-amber-50";
   const segOff =
     "text-stone-600 hover:bg-stone-200/80 dark:text-stone-400 dark:hover:bg-stone-700/80";
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="flex min-h-7 flex-wrap items-center gap-1.5">
         <span className={labelClass}>Height</span>
         <div
           className="inline-flex rounded-lg border border-stone-200/90 bg-stone-100/80 p-0.5 dark:border-stone-600 dark:bg-stone-800/80"
@@ -164,11 +166,17 @@ function HeightFields({
             aria-pressed={unit === "imperial"}
             onClick={() => onChange({ ...profile, heightUnit: "imperial" })}
           >
-            ft / in
+            ft/in
           </button>
+        </div>
+        </div>
+        <div className="flex min-h-7 items-center">
+          <span className={labelClass}>Weight (kg)</span>
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-3 items-start sm:gap-4">
+        <div className="min-w-0">
       {unit === "cm" ? (
         <input
           type="number"
@@ -185,10 +193,10 @@ function HeightFields({
           }
         />
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
-              Feet
+        <div className="grid grid-cols-2 gap-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              Ft
             </span>
             <input
               type="number"
@@ -211,9 +219,9 @@ function HeightFields({
               }}
             />
           </label>
-          <label className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
-              Inches
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              In
             </span>
             <input
               type="number"
@@ -238,32 +246,14 @@ function HeightFields({
           </label>
         </div>
       )}
-    </div>
-  );
-}
-
-export function ProfileForm({ profile, onChange, onSave }: Props) {
-  return (
-    <div className="flex flex-col gap-7">
-      <div>
-        <span className={labelClass}>Gender</span>
-        <p className="mb-3 mt-1.5 text-xs leading-relaxed text-stone-500 dark:text-stone-500">
-          Optional for tailoring portions and nutrition estimates.
-        </p>
-        <GenderPicker
-          value={profile.gender}
-          onChange={(gender) => onChange({ ...profile, gender })}
-        />
-      </div>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <HeightFields profile={profile} onChange={onChange} />
-        <label className="flex flex-col gap-2">
-          <span className={labelClass}>Weight (kg)</span>
+        </div>
+        <div className="min-w-0">
           <input
             type="number"
             min={1}
             step={0.1}
             className={inputClass}
+            aria-label="Weight in kilograms"
             value={profile.weightKg || ""}
             onChange={(e) =>
               onChange({
@@ -272,8 +262,35 @@ export function ProfileForm({ profile, onChange, onSave }: Props) {
               })
             }
           />
-        </label>
+        </div>
       </div>
+    </div>
+  );
+}
+
+export function ProfileForm({
+  profile,
+  onChange,
+  onSave,
+  compact = false,
+}: Props) {
+  const gap = compact ? "gap-5" : "gap-7";
+
+  return (
+    <div className={`flex flex-col ${gap}`}>
+      <div>
+        <span className={labelClass}>Gender</span>
+        {!compact ? (
+          <p className="mb-3 mt-1.5 text-xs leading-relaxed text-stone-500 dark:text-stone-500">
+            Optional for tailoring portions and nutrition estimates.
+          </p>
+        ) : null}
+        <GenderPicker
+          value={profile.gender}
+          onChange={(gender) => onChange({ ...profile, gender })}
+        />
+      </div>
+      <BodyMetricsFields profile={profile} onChange={onChange} />
       <label className="flex flex-col gap-2">
         <span className={labelClass}>Your goals</span>
         <textarea
@@ -310,10 +327,12 @@ export function ProfileForm({ profile, onChange, onSave }: Props) {
       >
         Save on this device
       </button>
-      <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-500">
-        We keep this only in your browser. It is not sent anywhere until you ask
-        for a recipe—and even then, we use it only to shape the suggestion.
-      </p>
+      {!compact ? (
+        <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-500">
+          We keep this only in your browser. It is not sent anywhere until you
+          ask for a recipe—and even then, we use it only to shape the suggestion.
+        </p>
+      ) : null}
     </div>
   );
 }
