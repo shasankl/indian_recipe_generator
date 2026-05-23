@@ -248,11 +248,12 @@ export function HomeClient() {
               <HeroBanner />
               <div className="min-w-0">
                 <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl dark:text-stone-50">
-                  Recipes that fit your life
+                  Tasty, healthy desi recipes
                 </h1>
                 <p className="mt-3 text-[15px] leading-relaxed text-stone-600 dark:text-stone-400">
-                  Tell us what you are in the mood for—we will suggest a sensible
-                  home-style idea and remember what you have had lately.
+                  Pick a meal and what you like. We&apos;ll suggest something
+                  homely that fits your goals, and remember what you&apos;ve had
+                  lately so your rotation stays fresh.
                 </p>
               </div>
             </div>

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rasoi — recipes for your goals",
+  title: "Rasoi — tasty, healthy desi recipes",
   description:
-    "Thoughtful Indian home-cooking ideas tailored to your profile and time.",
+    "Homely Indian recipe ideas tailored to your diet, goals, and time to cook.",
 };
 
 export default function RootLayout({
