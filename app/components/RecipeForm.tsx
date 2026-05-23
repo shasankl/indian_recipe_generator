@@ -60,7 +60,7 @@ export function RecipeForm({ disabled, onSubmit }: Props) {
         />
       </label>
       <label className="flex max-w-xs flex-col gap-2">
-        <span className={labelClass}>Time you have (minutes)</span>
+        <span className={labelClass}>Time to cook (minutes)</span>
         <input
           type="number"
           name="maxPrepMinutes"

@@ -41,7 +41,7 @@ export const recipeInputsSchema = z.object({
     .number()
     .int()
     .positive()
-    .max(240, "Max prep time is 240 minutes"),
+    .max(240, "Max cook time is 240 minutes"),
 });
 
 export const mealTypeSchema = recipeInputsSchema.shape.meal;

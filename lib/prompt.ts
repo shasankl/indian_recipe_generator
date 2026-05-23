@@ -59,7 +59,7 @@ Respond only with JSON matching the requested schema—no markdown, no code fenc
 ## Meal request
 - Meal: ${inputs.meal}
 - Dietary preferences / restrictions / dislikes: ${inputs.preferences || "none specified"}
-- Maximum time to prepare (active cooking + simple prep): ${inputs.maxPrepMinutes} minutes
+- Time to cook (active cooking and simple prep only): ${inputs.maxPrepMinutes} minutes maximum
 
 ## Requirements
 - Favor Indian ingredients and techniques where it fits the preferences above.
