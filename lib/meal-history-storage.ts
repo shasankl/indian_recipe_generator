@@ -10,7 +10,7 @@ import {
 const STORAGE_KEY = "indian-recipe-app-meal-history";
 
 /** Maximum recipes kept; older entries are dropped when a new one is saved. */
-export const MAX_HISTORY_ENTRIES = 10;
+export const MAX_HISTORY_ENTRIES = 15;
 const AVOID_TITLE_LIMIT = 14;
 const AVOID_WITHIN_DAYS = 30;
 

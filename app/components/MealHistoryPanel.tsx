@@ -10,6 +10,7 @@ const MEAL_LABEL: Record<MealHistoryEntry["meal"], string> = {
   breakfast: "Breakfast",
   lunch: "Lunch",
   dinner: "Dinner",
+  evening_snack: "Evening snack",
 };
 
 function formatServedAt(iso: string): string {

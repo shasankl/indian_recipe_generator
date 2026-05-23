@@ -32,6 +32,7 @@ export function RecipeForm({ disabled, onSubmit }: Props) {
               ["breakfast", "Breakfast"],
               ["lunch", "Lunch"],
               ["dinner", "Dinner"],
+              ["evening_snack", "Evening snack"],
             ] as const
           ).map(([value, label]) => (
             <label

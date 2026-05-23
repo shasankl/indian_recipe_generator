@@ -35,7 +35,7 @@ export const userProfileSchema = z
   );
 
 export const recipeInputsSchema = z.object({
-  meal: z.enum(["breakfast", "lunch", "dinner"]),
+  meal: z.enum(["breakfast", "lunch", "dinner", "evening_snack"]),
   preferences: z.string(),
   maxPrepMinutes: z
     .number()
