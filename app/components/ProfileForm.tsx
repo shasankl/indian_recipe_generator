@@ -109,6 +109,12 @@ function GenderPicker({
   );
 }
 
+const dietTypeOptions: { value: UserProfile["dietType"]; label: string }[] = [
+  { value: "veg", label: "Vegetarian" },
+  { value: "non_veg", label: "Non-vegetarian" },
+  { value: "other", label: "Other" },
+];
+
 const activityOptions: { value: UserProfile["activityLevel"]; label: string }[] =
   [
     { value: "sedentary", label: "Mostly seated day-to-day" },
@@ -291,6 +297,46 @@ export function ProfileForm({
         />
       </div>
       <BodyMetricsFields profile={profile} onChange={onChange} />
+      <div className="flex flex-col gap-2">
+        <label htmlFor="profile-diet-type" className={labelClass}>
+          Diet
+        </label>
+        <select
+          id="profile-diet-type"
+          className={inputClass}
+          value={profile.dietType}
+          onChange={(e) => {
+            const dietType = e.target.value as UserProfile["dietType"];
+            onChange({
+              ...profile,
+              dietType,
+              dietOther: dietType === "other" ? profile.dietOther : "",
+            });
+          }}
+        >
+          {dietTypeOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        {profile.dietType === "other" ? (
+          <label className="flex flex-col gap-2">
+            <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
+              Describe your diet
+            </span>
+            <input
+              type="text"
+              className={inputClass}
+              placeholder="e.g. gluten free, vegan, no onion or garlic…"
+              value={profile.dietOther}
+              onChange={(e) =>
+                onChange({ ...profile, dietOther: e.target.value })
+              }
+            />
+          </label>
+        ) : null}
+      </div>
       <label className="flex flex-col gap-2">
         <span className={labelClass}>Your goals</span>
         <textarea

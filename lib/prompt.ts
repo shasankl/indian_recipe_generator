@@ -14,7 +14,31 @@ const GENDER_LABEL: Record<UserProfile["gender"], string> = {
   unspecified: "not specified",
 };
 
-export function buildRecipePrompt(profile: UserProfile, inputs: RecipeInputs) {
+const DIET_TYPE_LABEL: Record<UserProfile["dietType"], string> = {
+  veg: "vegetarian (no meat, fish, or eggs)",
+  non_veg: "non-vegetarian (meat/fish/eggs allowed)",
+  other: "other (see details)",
+};
+
+function formatProfileDiet(profile: UserProfile): string {
+  if (profile.dietType === "other") {
+    return profile.dietOther.trim();
+  }
+  return DIET_TYPE_LABEL[profile.dietType];
+}
+
+export type BuildRecipePromptOptions = {
+  avoidRecentTitles?: string[];
+  /** Stronger wording when retrying after a duplicate title. */
+  forceDistinct?: boolean;
+};
+
+export function buildRecipePrompt(
+  profile: UserProfile,
+  inputs: RecipeInputs,
+  options: BuildRecipePromptOptions = {},
+) {
+  const { avoidRecentTitles = [], forceDistinct = false } = options;
   const system = `You are a helpful cooking assistant focused on Indian home cooking and sensible, practical meals.
 Use metric units in ingredient amounts where appropriate.
 Keep instructions clear and concise for a home cook.
@@ -30,6 +54,7 @@ Respond only with JSON matching the requested schema—no markdown, no code fenc
 - Weight: ${profile.weightKg} kg
 - Goals: ${profile.goals}
 - Activity: ${ACTIVITY_LABEL[profile.activityLevel]}
+- Diet: ${formatProfileDiet(profile)}
 
 ## Meal request
 - Meal: ${inputs.meal}
@@ -41,5 +66,17 @@ Respond only with JSON matching the requested schema—no markdown, no code fenc
 - Estimate macros for one serving of the recipe you describe (numbers only, approximate).
 - Include a short "notes" string (can mention substitutions or allergy reminders if relevant; use empty string if nothing to add).`;
 
-  return { system, user };
+  const avoidBlock =
+    avoidRecentTitles.length > 0
+      ? `
+
+## Recent meals to avoid
+The user has had these ${inputs.meal} dishes recently. Suggest something clearly different (not a minor rename of the same dish): ${avoidRecentTitles.join("; ")}.${
+          forceDistinct
+            ? " Your previous suggestion was too similar—pick a genuinely different dish and title."
+            : ""
+        }`
+      : "";
+
+  return { system, user: user + avoidBlock };
 }

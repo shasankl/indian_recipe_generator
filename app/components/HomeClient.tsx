@@ -1,16 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AppTabs, type AppTab } from "@/app/components/AppTabs";
+import { HeroBanner } from "@/app/components/HeroBanner";
+import { MealHistoryPanel } from "@/app/components/MealHistoryPanel";
 import { ProfileModal } from "@/app/components/ProfileModal";
 import { RecipeForm } from "@/app/components/RecipeForm";
 import { RecipeResult } from "@/app/components/RecipeResult";
+import {
+  clearHistory,
+  createHistoryEntry,
+  getAvoidTitles,
+  loadHistory,
+  removeHistoryEntry,
+} from "@/lib/meal-history-storage";
 import { loadProfile, persistProfile } from "@/lib/profile-storage";
 import {
   recipeRequestSchema,
+  type MealHistoryEntry,
   type RecipeInputs,
   type RecipeResponse,
   type UserProfile,
 } from "@/lib/schemas";
+
+type RecipeView = "request" | "history";
 
 function LoadingShell() {
   return (
@@ -57,17 +70,33 @@ function Spinner() {
 
 export function HomeClient() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [history, setHistory] = useState<MealHistoryEntry[]>([]);
+  const [activeTab, setActiveTab] = useState<AppTab>("request");
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileHighlight, setProfileHighlight] = useState(false);
   const [recipe, setRecipe] = useState<RecipeResponse | null>(null);
+  const [recipeView, setRecipeView] = useState<RecipeView | null>(null);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveHint, setSaveHint] = useState(false);
+  const requestRecipeRef = useRef<HTMLDivElement>(null);
+  const historyRecipeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage
     setProfile(loadProfile());
+    setHistory(loadHistory());
   }, []);
+
+  function scrollToRecipe(view: RecipeView) {
+    const ref = view === "request" ? requestRecipeRef : historyRecipeRef;
+    window.requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   if (!profile) {
     return <LoadingShell />;
@@ -96,10 +125,53 @@ export function HomeClient() {
     setProfileHighlight(false);
   }
 
+  function handleSelectHistory(id: string) {
+    if (selectedHistoryId === id && recipeView === "history") {
+      handleDeselectHistory();
+      return;
+    }
+    const entry = history.find((e) => e.id === id);
+    if (!entry) return;
+    setSelectedHistoryId(id);
+    setRecipe(entry.recipe);
+    setRecipeView("history");
+    setActiveTab("history");
+    scrollToRecipe("history");
+  }
+
+  function handleDeselectHistory() {
+    setSelectedHistoryId(null);
+    setRecipe(null);
+    setRecipeView(null);
+  }
+
+  function handleRemoveHistory(id: string) {
+    removeHistoryEntry(id);
+    const next = loadHistory();
+    setHistory(next);
+    if (selectedHistoryId === id) {
+      setSelectedHistoryId(null);
+      setRecipe(null);
+      setRecipeView(null);
+    }
+  }
+
+  function handleClearHistory() {
+    clearHistory();
+    setHistory([]);
+    setSelectedHistoryId(null);
+    setRecipe(null);
+    setRecipeView(null);
+  }
+
   async function handleRecipeRequest(inputs: RecipeInputs) {
     setError(null);
     setRecipe(null);
-    const payload = { profile, inputs };
+    setRecipeView(null);
+    setSelectedHistoryId(null);
+
+    const avoidRecentTitles = getAvoidTitles(inputs.meal);
+    const payload = { profile, inputs, avoidRecentTitles };
     const valid = recipeRequestSchema.safeParse(payload);
     if (!valid.success) {
       const fieldErrors = valid.error.flatten().fieldErrors;
@@ -132,7 +204,13 @@ export function HomeClient() {
         return;
       }
       if ("recipe" in data && data.recipe) {
+        const entry = createHistoryEntry(inputs.meal, inputs, data.recipe);
+        setHistory(loadHistory());
         setRecipe(data.recipe);
+        setRecipeView("request");
+        setSelectedHistoryId(entry.id);
+        setActiveTab("request");
+        scrollToRecipe("request");
       }
     } catch {
       setError("We could not reach the server. Check your connection and try again.");
@@ -141,67 +219,123 @@ export function HomeClient() {
     }
   }
 
+  const historyViewingRecipe =
+    recipeView === "history" && selectedHistoryId ? recipe : null;
+
   return (
     <>
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:max-w-3xl">
         <div className="rounded-2xl border border-stone-200/70 bg-white/85 px-5 py-8 shadow-xl shadow-stone-300/25 backdrop-blur-sm sm:px-8 sm:py-10 dark:border-stone-700/70 dark:bg-stone-900/75 dark:shadow-black/50">
-          <header className="flex items-start justify-between gap-4 border-b border-stone-200/80 pb-8 dark:border-stone-700/80">
-            <div className="min-w-0 flex-1">
+          <header className="space-y-6 border-b border-stone-200/80 pb-8 dark:border-stone-700/80">
+            <div className="flex items-start justify-between gap-4">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-900/80 dark:text-amber-500/90">
                 Rasoi
               </p>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl dark:text-stone-50">
-                Recipes that fit your life
-              </h1>
-              <p className="mt-3 text-[15px] leading-relaxed text-stone-600 dark:text-stone-400">
-                Tell us what you are in the mood for—we will suggest a sensible
-                home-style idea.
-              </p>
+              <button
+                type="button"
+                onClick={openProfile}
+                className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700/40 ${
+                  profileHighlight
+                    ? "border-amber-600 bg-amber-50 text-amber-950 ring-2 ring-amber-600 ring-offset-2 ring-offset-white dark:bg-amber-950/50 dark:text-amber-100 dark:ring-offset-stone-900"
+                    : "border-stone-300 bg-stone-100 text-stone-800 hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
+                }`}
+              >
+                Your profile
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={openProfile}
-              className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700/40 ${
-                profileHighlight
-                  ? "border-amber-600 bg-amber-50 text-amber-950 ring-2 ring-amber-600 ring-offset-2 ring-offset-white dark:bg-amber-950/50 dark:text-amber-100 dark:ring-offset-stone-900"
-                  : "border-stone-300 bg-stone-100 text-stone-800 hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
-              }`}
-            >
-              Your profile
-            </button>
+
+            <div className="grid gap-6 lg:grid-cols-2 lg:items-center lg:gap-8">
+              <HeroBanner />
+              <div className="min-w-0">
+                <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl dark:text-stone-50">
+                  Recipes that fit your life
+                </h1>
+                <p className="mt-3 text-[15px] leading-relaxed text-stone-600 dark:text-stone-400">
+                  Tell us what you are in the mood for—we will suggest a sensible
+                  home-style idea and remember what you have had lately.
+                </p>
+              </div>
+            </div>
           </header>
 
+          <AppTabs
+            active={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { id: "request", label: "Suggest" },
+              {
+                id: "history",
+                label: "Meal history",
+                badge: history.length,
+              },
+            ]}
+          />
+
           <main className="mt-8">
-            <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-50">
-              Request a recipe
-            </h2>
-            <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-              Choose a meal and we will suggest something that fits.
-            </p>
-            <div className="mt-6">
-              <RecipeForm disabled={loading} onSubmit={handleRecipeRequest} />
-            </div>
-
-            {error ? (
+            {activeTab === "request" ? (
               <div
-                className="mt-6 flex gap-3 rounded-xl border border-red-200/90 bg-red-50/95 px-4 py-3 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-100"
-                role="alert"
+                id="panel-request"
+                role="tabpanel"
+                aria-labelledby="tab-request"
               >
-                <AlertIcon />
-                <p className="leading-relaxed">{error}</p>
-              </div>
-            ) : null}
+                <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-50">
+                  Request a recipe
+                </h2>
+                <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                  Choose a meal and we will suggest something that fits.
+                </p>
+                <div className="mt-6">
+                  <RecipeForm disabled={loading} onSubmit={handleRecipeRequest} />
+                </div>
 
-            {loading ? (
-              <div className="mt-6 flex items-center gap-3 text-sm text-stone-600 dark:text-stone-400">
-                <Spinner />
-                <span className="leading-relaxed">
-                  Preparing your recipe—this usually takes a few seconds.
-                </span>
-              </div>
-            ) : null}
+                {error ? (
+                  <div
+                    className="mt-6 flex gap-3 rounded-xl border border-red-200/90 bg-red-50/95 px-4 py-3 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-100"
+                    role="alert"
+                  >
+                    <AlertIcon />
+                    <p className="leading-relaxed">{error}</p>
+                  </div>
+                ) : null}
 
-            {recipe ? <RecipeResult recipe={recipe} /> : null}
+                {loading ? (
+                  <div className="mt-6 flex items-center gap-3 text-sm text-stone-600 dark:text-stone-400">
+                    <Spinner />
+                    <span className="leading-relaxed">
+                      Preparing your recipe—this usually takes a few seconds.
+                    </span>
+                  </div>
+                ) : null}
+
+                {recipe && recipeView === "request" ? (
+                  <div ref={requestRecipeRef}>
+                    <RecipeResult recipe={recipe} />
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div
+                id="panel-history"
+                role="tabpanel"
+                aria-labelledby="tab-history"
+              >
+                <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-50">
+                  Meal history
+                </h2>
+                <div className="mt-6">
+                  <MealHistoryPanel
+                    entries={history}
+                    selectedId={selectedHistoryId}
+                    onSelect={handleSelectHistory}
+                    onDeselect={handleDeselectHistory}
+                    onRemove={handleRemoveHistory}
+                    onClearAll={handleClearHistory}
+                    viewingRecipe={historyViewingRecipe}
+                    recipeRef={historyRecipeRef}
+                  />
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>

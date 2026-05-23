@@ -28,6 +28,16 @@ export function loadProfile(): UserProfile {
         parsed.gender === "unspecified"
           ? parsed.gender
           : defaultProfile.gender,
+      dietType:
+        parsed.dietType === "veg" ||
+        parsed.dietType === "non_veg" ||
+        parsed.dietType === "other"
+          ? parsed.dietType
+          : defaultProfile.dietType,
+      dietOther:
+        typeof parsed.dietOther === "string"
+          ? parsed.dietOther
+          : defaultProfile.dietOther,
     };
   } catch {
     return { ...defaultProfile };

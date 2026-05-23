@@ -12,14 +12,27 @@ export const genderSchema = z.enum(["male", "female", "unspecified"]);
 
 export const heightUnitSchema = z.enum(["cm", "imperial"]);
 
-export const userProfileSchema = z.object({
-  heightCm: z.number().positive("Height must be greater than 0"),
-  heightUnit: heightUnitSchema,
-  weightKg: z.number().positive("Weight must be greater than 0"),
-  goals: z.string().min(1, "Describe at least one goal"),
-  activityLevel: activityLevelSchema,
-  gender: genderSchema,
-});
+export const dietTypeSchema = z.enum(["veg", "non_veg", "other"]);
+
+export const userProfileSchema = z
+  .object({
+    heightCm: z.number().positive("Height must be greater than 0"),
+    heightUnit: heightUnitSchema,
+    weightKg: z.number().positive("Weight must be greater than 0"),
+    goals: z.string().min(1, "Describe at least one goal"),
+    activityLevel: activityLevelSchema,
+    gender: genderSchema,
+    dietType: dietTypeSchema,
+    dietOther: z.string(),
+  })
+  .refine(
+    (data) =>
+      data.dietType !== "other" || data.dietOther.trim().length > 0,
+    {
+      message: "Please describe your diet (e.g. gluten free, vegan)",
+      path: ["dietOther"],
+    },
+  );
 
 export const recipeInputsSchema = z.object({
   meal: z.enum(["breakfast", "lunch", "dinner"]),
@@ -31,9 +44,12 @@ export const recipeInputsSchema = z.object({
     .max(240, "Max prep time is 240 minutes"),
 });
 
+export const mealTypeSchema = recipeInputsSchema.shape.meal;
+
 export const recipeRequestSchema = z.object({
   profile: userProfileSchema,
   inputs: recipeInputsSchema,
+  avoidRecentTitles: z.array(z.string()).max(20).optional(),
 });
 
 export const recipeResponseSchema = z.object({
@@ -54,8 +70,18 @@ export const recipeResponseSchema = z.object({
   notes: z.string(),
 });
 
+export const mealHistoryEntrySchema = z.object({
+  id: z.string().min(1),
+  meal: mealTypeSchema,
+  servedAt: z.string().datetime(),
+  inputs: recipeInputsSchema,
+  recipe: recipeResponseSchema,
+});
+
 export type UserProfile = z.infer<typeof userProfileSchema>;
 export type RecipeInputs = z.infer<typeof recipeInputsSchema>;
+export type MealType = z.infer<typeof mealTypeSchema>;
+export type MealHistoryEntry = z.infer<typeof mealHistoryEntrySchema>;
 export type RecipeRequest = z.infer<typeof recipeRequestSchema>;
 export type RecipeResponse = z.infer<typeof recipeResponseSchema>;
 
@@ -66,4 +92,6 @@ export const defaultProfile: UserProfile = {
   goals: "",
   activityLevel: "moderate",
   gender: "unspecified",
+  dietType: "veg",
+  dietOther: "",
 };
