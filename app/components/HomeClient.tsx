@@ -251,9 +251,9 @@ export function HomeClient() {
                   Tasty, healthy desi recipes
                 </h1>
                 <p className="mt-3 text-[15px] leading-relaxed text-stone-600 dark:text-stone-400">
-                  Pick a meal and what you like. We&apos;ll suggest something
-                  homely that fits your goals, and remember what you&apos;ve had
-                  lately so your rotation stays fresh.
+                  Pick a meal and what you like. We&apos;ll suggest recipes that
+                  fit your goals, and remember what you&apos;ve had lately so your
+                  rotation stays fresh.
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
                   Set your diet, goals, and other preferences in{" "}
