@@ -255,6 +255,17 @@ export function HomeClient() {
                   homely that fits your goals, and remember what you&apos;ve had
                   lately so your rotation stays fresh.
                 </p>
+                <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+                  Set your diet, goals, and other preferences in{" "}
+                  <button
+                    type="button"
+                    onClick={openProfile}
+                    className="font-semibold text-amber-900 underline decoration-amber-900/40 underline-offset-2 hover:text-amber-950 dark:text-amber-400 dark:decoration-amber-500/50 dark:hover:text-amber-300"
+                  >
+                    Your profile
+                  </button>{" "}
+                  so every suggestion fits you.
+                </p>
               </div>
             </div>
           </header>
