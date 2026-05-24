@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Capacitor mobile shell
+/mobile/node_modules
+/mobile/android/.gradle
+/mobile/android/build
+/mobile/android/app/build
+/mobile/android/local.properties
+/mobile/android/keystore.properties
+/mobile/ios/App/Pods
+/mobile/ios/App/build
+*.keystore
