@@ -55,6 +55,7 @@ Respond only with JSON matching the requested schema—no markdown, no code fenc
 - Goals: ${profile.goals}
 - Activity: ${ACTIVITY_LABEL[profile.activityLevel]}
 - Diet: ${formatProfileDiet(profile)}
+- Allergies: ${profile.allergies.trim() || "none specified"}
 
 ## Meal request
 - Meal: ${inputs.meal}

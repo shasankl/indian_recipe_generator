@@ -24,6 +24,7 @@ export const userProfileSchema = z
     gender: genderSchema,
     dietType: dietTypeSchema,
     dietOther: z.string(),
+    allergies: z.string(),
   })
   .refine(
     (data) =>
@@ -94,4 +95,5 @@ export const defaultProfile: UserProfile = {
   gender: "unspecified",
   dietType: "veg",
   dietOther: "",
+  allergies: "",
 };

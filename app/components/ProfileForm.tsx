@@ -338,6 +338,16 @@ export function ProfileForm({
         ) : null}
       </div>
       <label className="flex flex-col gap-2">
+        <span className={labelClass}>Allergies</span>
+        <textarea
+          rows={2}
+          placeholder="For example: peanuts, shellfish, lactose, sesame..."
+          className={`${inputClass} min-h-[4.5rem] resize-y`}
+          value={profile.allergies}
+          onChange={(e) => onChange({ ...profile, allergies: e.target.value })}
+        />
+      </label>
+      <label className="flex flex-col gap-2">
         <span className={labelClass}>Your goals</span>
         <textarea
           rows={3}

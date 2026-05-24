@@ -38,6 +38,10 @@ export function loadProfile(): UserProfile {
         typeof parsed.dietOther === "string"
           ? parsed.dietOther
           : defaultProfile.dietOther,
+      allergies:
+        typeof parsed.allergies === "string"
+          ? parsed.allergies
+          : defaultProfile.allergies,
     };
   } catch {
     return { ...defaultProfile };
