@@ -20,6 +20,12 @@ const DIET_TYPE_LABEL: Record<UserProfile["dietType"], string> = {
   other: "other (see details)",
 };
 
+const CUISINE_LABEL: Record<NonNullable<RecipeInputs["cuisine"]>, string> = {
+  north_indian: "North Indian",
+  south_indian: "South Indian",
+  indo_chinese: "Indo-Chinese",
+};
+
 function formatProfileDiet(profile: UserProfile): string {
   if (profile.dietType === "other") {
     return profile.dietOther.trim();
@@ -59,11 +65,16 @@ Respond only with JSON matching the requested schema—no markdown, no code fenc
 
 ## Meal request
 - Meal: ${inputs.meal}
+- Cuisine: ${inputs.cuisine ? CUISINE_LABEL[inputs.cuisine] : "no preference"}
 - Dietary preferences / restrictions / dislikes: ${inputs.preferences || "none specified"}
 - Time to cook (active cooking and simple prep only): ${inputs.maxPrepMinutes} minutes maximum
 
 ## Requirements
-- Favor Indian ingredients and techniques where it fits the preferences above.
+- Favor Indian ingredients and techniques where it fits the preferences above.${
+    inputs.cuisine
+      ? ` Strongly align the dish with ${CUISINE_LABEL[inputs.cuisine]} home-style cooking.`
+      : ""
+  }
 - Estimate macros for one serving of the recipe you describe (numbers only, approximate).
 - Include a short "notes" string (can mention substitutions or allergy reminders if relevant; use empty string if nothing to add).`;
 

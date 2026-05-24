@@ -1,7 +1,14 @@
 "use client";
 
-import type { RecipeInputs } from "@/lib/schemas";
+import type { CuisineType, RecipeInputs } from "@/lib/schemas";
 import { inputClass, labelClass } from "@/lib/ui";
+
+const cuisineOptions: { value: "" | CuisineType; label: string }[] = [
+  { value: "", label: "No preference" },
+  { value: "north_indian", label: "North Indian" },
+  { value: "south_indian", label: "South Indian" },
+  { value: "indo_chinese", label: "Indo-Chinese" },
+];
 
 type Props = {
   disabled?: boolean;
@@ -13,10 +20,18 @@ export function RecipeForm({ disabled, onSubmit }: Props) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const meal = fd.get("meal") as RecipeInputs["meal"];
+    const cuisineRaw = String(fd.get("cuisine") ?? "");
+    const cuisine =
+      cuisineRaw === "north_indian" ||
+      cuisineRaw === "south_indian" ||
+      cuisineRaw === "indo_chinese"
+        ? cuisineRaw
+        : undefined;
     const preferences = String(fd.get("preferences") ?? "");
     const maxPrepMinutes = parseInt(String(fd.get("maxPrepMinutes")), 10);
     onSubmit({
       meal,
+      cuisine,
       preferences,
       maxPrepMinutes: Number.isFinite(maxPrepMinutes) ? maxPrepMinutes : 30,
     });
@@ -51,6 +66,16 @@ export function RecipeForm({ disabled, onSubmit }: Props) {
           ))}
         </div>
       </fieldset>
+      <label className="flex flex-col gap-2">
+        <span className={labelClass}>Cuisine (optional)</span>
+        <select name="cuisine" className={inputClass} defaultValue="">
+          {cuisineOptions.map((o) => (
+            <option key={o.value || "any"} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="flex flex-col gap-2">
         <span className={labelClass}>Tastes & boundaries</span>
         <textarea

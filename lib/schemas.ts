@@ -35,8 +35,15 @@ export const userProfileSchema = z
     },
   );
 
+export const cuisineSchema = z.enum([
+  "north_indian",
+  "south_indian",
+  "indo_chinese",
+]);
+
 export const recipeInputsSchema = z.object({
   meal: z.enum(["breakfast", "lunch", "dinner", "evening_snack"]),
+  cuisine: cuisineSchema.optional(),
   preferences: z.string(),
   maxPrepMinutes: z
     .number()
@@ -80,6 +87,7 @@ export const mealHistoryEntrySchema = z.object({
 });
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
+export type CuisineType = z.infer<typeof cuisineSchema>;
 export type RecipeInputs = z.infer<typeof recipeInputsSchema>;
 export type MealType = z.infer<typeof mealTypeSchema>;
 export type MealHistoryEntry = z.infer<typeof mealHistoryEntrySchema>;
